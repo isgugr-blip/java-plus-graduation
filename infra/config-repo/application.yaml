@@ -1,0 +1,13 @@
+spring:
+  main:
+    banner-mode: off
+    log-startup-info: false
+
+logging:
+  level:
+    org:
+      springframework: ERROR
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${random.uuid}
