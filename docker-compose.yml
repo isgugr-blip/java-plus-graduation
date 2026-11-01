@@ -1,13 +1,32 @@
 services:
-  stats-server:
-    build: stat/stats-server
-    container_name: stats-server
+  discovery-server:
+    build: infra/discovery-server
+    container_name: discovery-server
     ports:
-      - "9090:9090"
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8761/eureka/apps || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  config-server:
+    build: infra/config-server
+    container_name: config-server
+    depends_on:
+      discovery-server:
+        condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/ewm-stats
-      - SPRING_DATASOURCE_USERNAME=stat
-      - SPRING_DATASOURCE_PASSWORD=stat
+      SERVER_PORT: 8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS: file:/config-repo
+    volumes:
+      - ./infra/config-repo:/config-repo:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8888/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   stats-db:
     image: postgres:16.1
@@ -15,27 +34,162 @@ services:
     ports:
       - "6542:5432"
     environment:
-      - POSTGRES_USER=stat
-      - POSTGRES_PASSWORD=stat
-      - POSTGRES_DB=ewm-stats
+      POSTGRES_USER: stat
+      POSTGRES_PASSWORD: stat
+      POSTGRES_DB: ewm-stats
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stat -d ewm-stats"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  ewm-service:
-    build: ./main-service
-    container_name: main-service
-    ports:
-      - "8080:8080"
-    environment:
-      - CLIENT_URL=http://stats-server:9090
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm-main
-      - SPRING_DATASOURCE_USERNAME=main
-      - SPRING_DATASOURCE_PASSWORD=main
-
-  ewm-db:
+  event-db:
     image: postgres:16.1
-    container_name: postgres-ewm-main-db
+    container_name: postgres-ewm-event-db
     ports:
       - "7542:5432"
     environment:
-      - POSTGRES_USER=main
-      - POSTGRES_PASSWORD=main
-      - POSTGRES_DB=ewm-main
+      POSTGRES_USER: main
+      POSTGRES_PASSWORD: main
+      POSTGRES_DB: ewm-main
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U main -d ewm-main"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  user-db:
+    image: postgres:16.1
+    container_name: postgres-ewm-user-db
+    ports:
+      - "8542:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: user
+      POSTGRES_DB: ewm-user
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d ewm-user"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  request-db:
+    image: postgres:16.1
+    container_name: postgres-ewm-request-db
+    ports:
+      - "9542:5432"
+    environment:
+      POSTGRES_USER: request
+      POSTGRES_PASSWORD: request
+      POSTGRES_DB: ewm-request
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U request -d ewm-request"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  comment-db:
+    image: postgres:16.1
+    container_name: postgres-ewm-comment-db
+    ports:
+      - "10542:5432"
+    environment:
+      POSTGRES_USER: comment
+      POSTGRES_PASSWORD: comment
+      POSTGRES_DB: ewm-comment
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U comment -d ewm-comment"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  stats-server:
+    build: stat/stats-server
+    container_name: stats-server
+    depends_on:
+      config-server:
+        condition: service_healthy
+      stats-db:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/ewm-stats
+      SPRING_DATASOURCE_USERNAME: stat
+      SPRING_DATASOURCE_PASSWORD: stat
+
+  user-service:
+    build: core/user-service
+    container_name: user-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      user-db:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/ewm-user
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: user
+
+  event-service:
+    build: core/event-service
+    container_name: event-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      event-db:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://event-db:5432/ewm-main
+      SPRING_DATASOURCE_USERNAME: main
+      SPRING_DATASOURCE_PASSWORD: main
+
+  request-service:
+    build: core/request-service
+    container_name: request-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      request-db:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://request-db:5432/ewm-request
+      SPRING_DATASOURCE_USERNAME: request
+      SPRING_DATASOURCE_PASSWORD: request
+
+  comment-service:
+    build: core/comment-service
+    container_name: comment-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      comment-db:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://comment-db:5432/ewm-comment
+      SPRING_DATASOURCE_USERNAME: comment
+      SPRING_DATASOURCE_PASSWORD: comment
+
+  gateway-server:
+    build: infra/gateway-server
+    container_name: gateway-server
+    depends_on:
+      config-server:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+      request-service:
+        condition: service_started
+      comment-service:
+        condition: service_started
+      stats-server:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/

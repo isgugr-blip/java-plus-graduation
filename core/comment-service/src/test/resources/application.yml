@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: comment-service
+  cloud:
+    config:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false

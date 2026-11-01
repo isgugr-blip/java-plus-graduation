@@ -1,0 +1,23 @@
+stats-client:
+  service-id: stats-server
+
+server:
+  port: 0
+  forward-headers-strategy: native
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:7542/ewm-main
+    username: main
+    password: main
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: always
