@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: main-service
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/**,/users/**,/events/**,/categories/**,/compilations/**,/comments/**
+
+management:
+  endpoint:
+    gateway:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: gateway

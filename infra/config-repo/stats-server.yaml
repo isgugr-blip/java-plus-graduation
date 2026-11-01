@@ -1,0 +1,18 @@
+server:
+  port: 0
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    password: stat
+    url: jdbc:postgresql://localhost:6542/ewm-stats
+    username: stat
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: always
