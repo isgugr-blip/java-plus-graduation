@@ -11,7 +11,7 @@ logging:
 eureka:
   instance:
     instance-id: ${spring.application.name}:${random.uuid}
-    hostname: ${spring.application.name}
+    prefer-ip-address: true
 
 feign:
   circuitbreaker:
