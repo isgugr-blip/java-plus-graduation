@@ -11,3 +11,40 @@ logging:
 eureka:
   instance:
     instance-id: ${spring.application.name}:${random.uuid}
+    prefer-ip-address: true
+
+feign:
+  circuitbreaker:
+    enabled: true
+  client:
+    config:
+      default:
+        connect-timeout: 2000
+        read-timeout: 3000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      request-service:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+      user-service:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+      event-service:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+  retry:
+    instances:
+      request-service:
+        max-attempts: 2
+        wait-duration: 200ms
+      user-service:
+        max-attempts: 2
+        wait-duration: 200ms
+      event-service:
+        max-attempts: 2
+        wait-duration: 200ms
