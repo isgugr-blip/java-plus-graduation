@@ -60,7 +60,6 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<ParticipationRequestDto> getUserRequests(Long userId) {
-        userClient.getUser(userId);
         return RequestMapper.toRequestDto(requestRepository.findByRequesterId(userId));
     }
 

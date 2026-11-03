@@ -14,6 +14,8 @@ import ru.practicum.main.dto.comment.UserCommentAdminDto;
 import ru.practicum.main.dto.event.EventInternalDto;
 import ru.practicum.main.dto.user.UserInternalDto;
 import ru.practicum.main.entity.event.EventState;
+import feign.RetryableException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import ru.practicum.main.exception.ConflictException;
 import ru.practicum.main.exception.NotFoundException;
 import ru.practicum.main.exception.ServiceUnavailableException;
@@ -105,7 +107,7 @@ public class CommentServiceImpl implements CommentService {
     public List<CommentDto> getEventComments(Long eventId) {
         try {
             eventClient.getEvent(eventId);
-        } catch (ServiceUnavailableException e) {
+        } catch (ServiceUnavailableException | RetryableException | CallNotPermittedException e) {
             log.warn("Событие не проверено из-за недоступности event-service: {}", e.getMessage());
         }
         return CommentMapper.toCommentDto(commentRepository.findAllByEventId(eventId));

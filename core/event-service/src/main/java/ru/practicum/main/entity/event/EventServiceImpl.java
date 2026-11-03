@@ -81,8 +81,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getById(Long userId, Long eventId) {
-        userClient.getUser(userId);
         Event event = getEvent(eventId);
+        checkUserIsEventInitiator(userId, event);
         Long views = getViewsMap(Collections.singletonList(event)).getOrDefault(event.getId(), 0L);
         long confirmedRequests = getEventRequestsCount(eventId);
         return EventMapper.toEventFullDto(event, confirmedRequests, views);

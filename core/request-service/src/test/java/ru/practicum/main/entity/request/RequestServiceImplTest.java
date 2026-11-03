@@ -138,13 +138,12 @@ class RequestServiceImplTest {
                 .createdAt(LocalDateTime.now())
                 .status(RequestStatus.CONFIRMED)
                 .build();
-        when(userClient.getUser(1L)).thenReturn(UserInternalDto.builder().id(1L).build());
         when(requestRepository.findByRequesterId(1L)).thenReturn(List.of(request));
 
         List<ParticipationRequestDto> result = requestService.getUserRequests(1L);
 
         assertEquals(1, result.size());
-        verify(userClient).getUser(1L);
+        verifyNoInteractions(userClient);
     }
 
     private EventInternalDto event(EventState state, Long initiatorId, Integer participantLimit) {
