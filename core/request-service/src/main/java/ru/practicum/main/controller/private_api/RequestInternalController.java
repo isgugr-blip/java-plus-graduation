@@ -1,6 +1,7 @@
 package ru.practicum.main.controller.private_api;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,5 +25,10 @@ public class RequestInternalController {
     public List<EventRequestsCountDto> getCounts(@RequestBody Set<Long> eventIds,
                                                  @RequestParam RequestStatus status) {
         return requestService.countByEventIdsAndStatus(eventIds, status);
+    }
+
+    @GetMapping("/confirmed")
+    public boolean isConfirmedParticipant(@RequestParam Long userId, @RequestParam Long eventId) {
+        return requestService.isConfirmedParticipant(userId, eventId);
     }
 }

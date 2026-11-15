@@ -1,6 +1,7 @@
 package ru.practicum.main.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,4 +17,7 @@ public interface RequestClient {
     @PostMapping("/counts")
     List<EventRequestsCountDto> countByEventIdsAndStatus(@RequestBody Set<Long> eventIds,
                                                          @RequestParam RequestStatus status);
+
+    @GetMapping("/confirmed")
+    boolean isConfirmedParticipant(@RequestParam Long userId, @RequestParam Long eventId);
 }

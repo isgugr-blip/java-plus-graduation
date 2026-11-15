@@ -1,0 +1,10 @@
+grpc:
+  server:
+    port: 0
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: ru.practicum.ewm.stats.kafka.AvroSerializer

@@ -1,6 +1,5 @@
 package ru.practicum.main.entity.event;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.main.dto.event.EventAdminParamDto;
 import ru.practicum.main.dto.event.EventFullDto;
@@ -21,9 +20,13 @@ public interface EventService {
 
     EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest request);
 
-    List<EventShortDto> getPublishedEvents(EventPublicParamDto params, HttpServletRequest request);
+    List<EventShortDto> getPublishedEvents(EventPublicParamDto params);
 
-    EventFullDto getPublishedEventById(Long id, HttpServletRequest request);
+    EventFullDto getPublishedEventById(Long id, long userId);
+
+    List<EventShortDto> getRecommendations(long userId, int maxResults);
+
+    void likeEvent(long userId, Long eventId);
 
     EventFullDto create(Long userId, NewEventDto dto);
 
@@ -37,7 +40,7 @@ public interface EventService {
 
     Map<Long, Long> getEventsRequests(List<Event> events);
 
-    Map<Long, Long> getViewsMap(List<Event> events);
+    Map<Long, Double> getRatingsMap(List<Event> events);
 
     Event findEventByIdAndState(Long id, EventState state);
 

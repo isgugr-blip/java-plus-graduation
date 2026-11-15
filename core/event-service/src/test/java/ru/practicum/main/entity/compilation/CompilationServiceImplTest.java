@@ -97,8 +97,8 @@ class CompilationServiceImplTest {
         when(compilationRepository.findAll(Mockito.<Pageable>any()))
                 .thenReturn(new PageImpl<>(List.of(compilation)));
 
-        when(eventService.getViewsMap(anyList()))
-                .thenReturn(Map.of(1L, 15L));
+        when(eventService.getRatingsMap(anyList()))
+                .thenReturn(Map.of(1L, 15.0));
 
         when(eventService.getEventsRequests(anyList()))
                 .thenReturn(Map.of(1L, 7L));
@@ -115,11 +115,11 @@ class CompilationServiceImplTest {
 
         EventShortDto shortDto = dto.getEvents().iterator().next();
 
-        assertEquals(15L, shortDto.getViews());
+        assertEquals(15.0, shortDto.getRating());
         assertEquals(7L, shortDto.getConfirmedRequests());
 
         verify(compilationRepository).findAll(Mockito.<Pageable>any());
-        verify(eventService).getViewsMap(anyList());
+        verify(eventService).getRatingsMap(anyList());
         verify(eventService).getEventsRequests(anyList());
     }
 
@@ -136,7 +136,7 @@ class CompilationServiceImplTest {
                 Mockito.<Pageable>any()))
                 .thenReturn(new PageImpl<>(List.of(compilation)));
 
-        when(eventService.getViewsMap(anyList()))
+        when(eventService.getRatingsMap(anyList()))
                 .thenReturn(Map.of());
 
         when(eventService.getEventsRequests(anyList()))
@@ -178,8 +178,8 @@ class CompilationServiceImplTest {
         when(compilationRepository.findWithEventsById(1L))
                 .thenReturn(Optional.of(compilation));
 
-        when(eventService.getViewsMap(anyList()))
-                .thenReturn(Map.of(1L, 20L));
+        when(eventService.getRatingsMap(anyList()))
+                .thenReturn(Map.of(1L, 20.0));
 
         when(eventService.getEventsRequests(anyList()))
                 .thenReturn(Map.of(1L, 3L));
@@ -190,7 +190,7 @@ class CompilationServiceImplTest {
 
         EventShortDto shortDto = dto.getEvents().iterator().next();
 
-        assertEquals(20L, shortDto.getViews());
+        assertEquals(20.0, shortDto.getRating());
         assertEquals(3L, shortDto.getConfirmedRequests());
 
         verify(compilationRepository).findWithEventsById(1L);
@@ -240,8 +240,8 @@ class CompilationServiceImplTest {
         when(eventService.getByIds(dto.getEvents()))
                 .thenReturn(List.of(event1, event2));
 
-        when(eventService.getViewsMap(anyList()))
-                .thenReturn(Map.of(1L, 10L, 2L, 20L));
+        when(eventService.getRatingsMap(anyList()))
+                .thenReturn(Map.of(1L, 10.0, 2L, 20.0));
 
         when(eventService.getEventsRequests(anyList()))
                 .thenReturn(Map.of(1L, 5L, 2L, 7L));
@@ -316,8 +316,8 @@ class CompilationServiceImplTest {
         when(compilationRepository.findWithEventsById(1L))
                 .thenReturn(Optional.of(compilation));
 
-        when(eventService.getViewsMap(anyList()))
-                .thenReturn(Map.of(1L, 10L));
+        when(eventService.getRatingsMap(anyList()))
+                .thenReturn(Map.of(1L, 10.0));
 
         when(eventService.getEventsRequests(anyList()))
                 .thenReturn(Map.of(1L, 5L));
@@ -338,7 +338,7 @@ class CompilationServiceImplTest {
         when(compilationRepository.findWithEventsById(1L))
                 .thenReturn(Optional.of(compilation));
 
-        when(eventService.getViewsMap(anyList()))
+        when(eventService.getRatingsMap(anyList()))
                 .thenReturn(Map.of());
         when(eventService.getEventsRequests(anyList()))
                 .thenReturn(Map.of());
@@ -383,7 +383,7 @@ class CompilationServiceImplTest {
         when(eventService.getByIds(request.getEvents()))
                 .thenReturn(List.of(event2, event3));
 
-        when(eventService.getViewsMap(anyList()))
+        when(eventService.getRatingsMap(anyList()))
                 .thenReturn(Map.of());
 
         when(eventService.getEventsRequests(anyList()))
@@ -408,8 +408,8 @@ class CompilationServiceImplTest {
         when(compilationRepository.findWithEventsById(1L))
                 .thenReturn(Optional.of(compilation));
 
-        when(eventService.getViewsMap(anyList()))
-                .thenReturn(Map.of(1L, 10L));
+        when(eventService.getRatingsMap(anyList()))
+                .thenReturn(Map.of(1L, 10.0));
 
         when(eventService.getEventsRequests(anyList()))
                 .thenReturn(Map.of(1L, 5L));

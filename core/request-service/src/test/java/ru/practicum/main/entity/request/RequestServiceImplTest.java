@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.practicum.ewm.stats.client.CollectorClient;
 import ru.practicum.main.client.EventClient;
 import ru.practicum.main.client.UserClient;
 import ru.practicum.main.dto.event.EventInternalDto;
@@ -34,6 +35,8 @@ class RequestServiceImplTest {
     private EventClient eventClient;
     @Mock
     private UserClient userClient;
+    @Mock
+    private CollectorClient collectorClient;
 
     @InjectMocks
     private RequestServiceImpl requestService;
@@ -57,6 +60,7 @@ class RequestServiceImplTest {
 
         assertEquals(10L, result.getId());
         verify(requestRepository).save(any(Request.class));
+        verify(collectorClient).sendRegistration(1L, 2L);
     }
 
     @Test

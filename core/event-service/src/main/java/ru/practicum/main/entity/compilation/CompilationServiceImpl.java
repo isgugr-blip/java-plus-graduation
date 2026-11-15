@@ -50,12 +50,12 @@ public class CompilationServiceImpl implements CompilationService {
                 .flatMap(Collection::stream)
                 .toList();
 
-        Map<Long, Long> hitsMap = eventService.getViewsMap(events);
+        Map<Long, Double> ratings = eventService.getRatingsMap(events);
         Map<Long, Long> eventsIdRequestsCount = eventService.getEventsRequests(events);
 
         return compilations.stream()
                 .map(compilation ->
-                        CompilationMapper.toDto(compilation, hitsMap, eventsIdRequestsCount))
+                        CompilationMapper.toDto(compilation, ratings, eventsIdRequestsCount))
                 .toList();
     }
 
@@ -66,10 +66,10 @@ public class CompilationServiceImpl implements CompilationService {
         List<Event> events = compilation.getEvents().stream()
                 .toList();
 
-        Map<Long, Long> hitsMap = eventService.getViewsMap(events);
+        Map<Long, Double> ratings = eventService.getRatingsMap(events);
         Map<Long, Long> eventsIdRequestsCount = eventService.getEventsRequests(events);
 
-        return CompilationMapper.toDto(compilation, hitsMap, eventsIdRequestsCount);
+        return CompilationMapper.toDto(compilation, ratings, eventsIdRequestsCount);
     }
 
     @Override
@@ -84,10 +84,10 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation entity = CompilationMapper.toEntity(dto, new HashSet<>(events));
         entity = compilationRepository.save(entity);
 
-        Map<Long, Long> hitsMap = eventService.getViewsMap(events);
+        Map<Long, Double> ratings = eventService.getRatingsMap(events);
         Map<Long, Long> eventsIdRequestsCount = eventService.getEventsRequests(events);
 
-        var compilationDto = CompilationMapper.toDto(entity, hitsMap, eventsIdRequestsCount);
+        var compilationDto = CompilationMapper.toDto(entity, ratings, eventsIdRequestsCount);
         log.info("Новая подборка событий: {}", CompilationMapper.toLog(compilationDto));
 
         return compilationDto;
@@ -113,9 +113,9 @@ public class CompilationServiceImpl implements CompilationService {
         List<Event> events = compilation.getEvents().stream()
                 .toList();
 
-        Map<Long, Long> hitsMap = eventService.getViewsMap(events);
+        Map<Long, Double> ratings = eventService.getRatingsMap(events);
         Map<Long, Long> eventsIdRequestsCount = eventService.getEventsRequests(events);
-        var compilationDto = CompilationMapper.toDto(compilation, hitsMap, eventsIdRequestsCount);
+        var compilationDto = CompilationMapper.toDto(compilation, ratings, eventsIdRequestsCount);
         log.info("Подборка событий обновлена: {}", CompilationMapper.toLog(compilationDto));
 
         return compilationDto;

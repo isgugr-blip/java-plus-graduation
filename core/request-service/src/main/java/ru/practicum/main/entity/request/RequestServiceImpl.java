@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.stats.client.CollectorClient;
 import ru.practicum.main.client.EventClient;
 import ru.practicum.main.client.UserClient;
 import ru.practicum.main.dto.event.EventInternalDto;
@@ -28,6 +29,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final EventClient eventClient;
     private final UserClient userClient;
+    private final CollectorClient collectorClient;
 
     @Override
     @Transactional
@@ -40,6 +42,7 @@ public class RequestServiceImpl implements RequestService {
         checkUserRequestForEvent(event, userId);
 
         Request request = requestRepository.save(RequestMapper.toRequest(event, userId));
+        collectorClient.sendRegistration(userId, eventId);
         var result = RequestMapper.toRequestDto(request);
         log.info("Новая заявка на событие: {}", result);
         return result;
@@ -69,6 +72,11 @@ public class RequestServiceImpl implements RequestService {
             return List.of();
         }
         return requestRepository.countByEventIdInAndStatus(ids, status);
+    }
+
+    @Override
+    public boolean isConfirmedParticipant(Long userId, Long eventId) {
+        return requestRepository.existsByRequesterIdAndEventIdAndStatus(userId, eventId, RequestStatus.CONFIRMED);
     }
 
     @Override

@@ -63,10 +63,10 @@ class CompilationMapperTest {
         compilation.setPinned(true);
         compilation.setEvents(Set.of(event));
 
-        Map<Long, Long> hits = Map.of(1L, 15L);
+        Map<Long, Double> ratings = Map.of(1L, 15.0);
         Map<Long, Long> requests = Map.of(1L, 7L);
 
-        CompilationDto dto = CompilationMapper.toDto(compilation, hits, requests);
+        CompilationDto dto = CompilationMapper.toDto(compilation, ratings, requests);
 
         assertEquals(10L, dto.getId());
         assertEquals("Compilation", dto.getTitle());
@@ -75,7 +75,7 @@ class CompilationMapperTest {
         assertEquals(1, dto.getEvents().size());
 
         EventShortDto eventDto = dto.getEvents().iterator().next();
-        assertEquals(15L, eventDto.getViews());
+        assertEquals(15.0, eventDto.getRating());
         assertEquals(7L, eventDto.getConfirmedRequests());
     }
 
@@ -92,7 +92,7 @@ class CompilationMapperTest {
 
         EventShortDto eventDto = dto.getEvents().iterator().next();
 
-        assertEquals(0L, eventDto.getViews());
+        assertEquals(0.0, eventDto.getRating());
         assertEquals(0L, eventDto.getConfirmedRequests());
     }
 

@@ -23,6 +23,12 @@ public class RequestClientAdapter {
         return requestClient.countByEventIdsAndStatus(eventIds, status);
     }
 
+    @Retry(name = "request-service")
+    @CircuitBreaker(name = "request-service")
+    public boolean isConfirmedParticipant(Long userId, Long eventId) {
+        return requestClient.isConfirmedParticipant(userId, eventId);
+    }
+
     List<EventRequestsCountDto> emptyCounts(Set<Long> eventIds, RequestStatus status, Throwable error) {
         return List.of();
     }

@@ -1,6 +1,5 @@
 package ru.practicum.main.controller.public_api;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,8 +45,7 @@ class EventPublicControllerTest {
 
     @Test
     void getEvents_shouldReturnEvents() throws Exception {
-        when(eventService.getPublishedEvents(any(EventPublicParamDto.class),
-                any(HttpServletRequest.class)))
+        when(eventService.getPublishedEvents(any(EventPublicParamDto.class)))
                 .thenReturn(List.of(shortDto));
 
         mvc.perform(get("/events"))
@@ -56,27 +54,42 @@ class EventPublicControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Title"));
 
         verify(eventService)
-                .getPublishedEvents(any(EventPublicParamDto.class),
-                        any(HttpServletRequest.class));
+                .getPublishedEvents(any(EventPublicParamDto.class));
     }
 
     @Test
     void getEventById_shouldReturnEvent() throws Exception {
-        when(eventService.getPublishedEventById(eq(1L), any(HttpServletRequest.class)))
+        when(eventService.getPublishedEventById(1L, 7L))
                 .thenReturn(fullDto);
 
-        mvc.perform(get("/events/1"))
+        mvc.perform(get("/events/1").header("X-EWM-USER-ID", 7))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Title"));
 
         verify(eventService)
-                .getPublishedEventById(eq(1L), any(HttpServletRequest.class));
+                .getPublishedEventById(1L, 7L);
+    }
+
+    @Test
+    void getEventById_withoutUserHeader_shouldReturn400() throws Exception {
+        mvc.perform(get("/events/1"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(eventService);
+    }
+
+    @Test
+    void likeEvent_shouldPassUserFromHeader() throws Exception {
+        mvc.perform(put("/events/1/like").header("X-EWM-USER-ID", 7))
+                .andExpect(status().isOk());
+
+        verify(eventService).likeEvent(7L, 1L);
     }
 
     @Test
     void getEventById_whenIdIsNegative_shouldReturn400() throws Exception {
-        mvc.perform(get("/events/-1"))
+        mvc.perform(get("/events/-1").header("X-EWM-USER-ID", 7))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(eventService);
