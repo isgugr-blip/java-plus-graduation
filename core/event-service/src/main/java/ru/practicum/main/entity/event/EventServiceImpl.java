@@ -181,7 +181,7 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        if (SortBy.VIEWS == params.getSort()) {
+        if (SortBy.RATING == params.getSort()) {
             result.sort(Comparator.comparing(EventShortDto::getRating).reversed());
         }
         return result;

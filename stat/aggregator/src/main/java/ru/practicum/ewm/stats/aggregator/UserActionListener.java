@@ -26,7 +26,6 @@ public class UserActionListener {
     public void onUserAction(UserActionAvro action) {
         List<EventSimilarityAvro> similarities = calculator.update(action);
         similarities.forEach(similarity -> kafkaTemplate.send(topic, similarity));
-        kafkaTemplate.flush();
         log.debug("Действие {} обработано, пересчитано коэффициентов сходства: {}", action, similarities.size());
     }
 }
