@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class CompilationMapper {
 
     public static CompilationDto toDto(Compilation entity,
-                                       Map<Long, Long> eventHits,
+                                       Map<Long, Double> eventRatings,
                                        Map<Long, Long> eventRequestsCount) {
         return CompilationDto.builder()
                 .id(entity.getId())
@@ -24,7 +24,7 @@ public class CompilationMapper {
                         .map(event -> EventMapper.toEventShortDto(
                                 event,
                                 eventRequestsCount.getOrDefault(event.getId(), 0L),
-                                eventHits.getOrDefault(event.getId(), 0L)
+                                eventRatings.getOrDefault(event.getId(), 0.0)
                         ))
                         .collect(Collectors.toSet()))
                 .build();

@@ -1,6 +1,5 @@
 package ru.practicum.main.controller.public_api;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -19,17 +18,30 @@ import java.util.List;
 @Validated
 public class EventPublicController {
 
+    private static final String USER_ID_HEADER = "X-EWM-USER-ID";
+
     private final EventService eventService;
 
     @GetMapping
-    public List<EventShortDto> getEvents(@ModelAttribute @Valid EventPublicParamDto params,
-                                         HttpServletRequest request) {
-        return eventService.getPublishedEvents(params, request);
+    public List<EventShortDto> getEvents(@ModelAttribute @Valid EventPublicParamDto params) {
+        return eventService.getPublishedEvents(params);
     }
 
     @GetMapping("/{id}")
     public EventFullDto getEventById(@PathVariable @Positive Long id,
-                                     HttpServletRequest request) {
-        return eventService.getPublishedEventById(id, request);
+                                     @RequestHeader(USER_ID_HEADER) long userId) {
+        return eventService.getPublishedEventById(id, userId);
+    }
+
+    @GetMapping("/recommendations")
+    public List<EventShortDto> getRecommendations(@RequestHeader(USER_ID_HEADER) long userId,
+                                                  @RequestParam(defaultValue = "10") @Positive int maxResults) {
+        return eventService.getRecommendations(userId, maxResults);
+    }
+
+    @PutMapping("/{eventId}/like")
+    public void likeEvent(@PathVariable @Positive Long eventId,
+                          @RequestHeader(USER_ID_HEADER) long userId) {
+        eventService.likeEvent(userId, eventId);
     }
 }

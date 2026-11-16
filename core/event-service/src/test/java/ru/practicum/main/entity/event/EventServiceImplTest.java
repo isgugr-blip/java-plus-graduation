@@ -8,6 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import ru.practicum.ewm.stats.client.AnalyzerClient;
+import ru.practicum.ewm.stats.client.CollectorClient;
 import ru.practicum.main.client.UserClient;
 import ru.practicum.main.dto.category.CategoryDto;
 import ru.practicum.main.dto.event.EventAdminParamDto;
@@ -20,17 +22,19 @@ import ru.practicum.main.entity.category.Category;
 import ru.practicum.main.entity.category.CategoryService;
 import ru.practicum.main.exception.ConflictException;
 import ru.practicum.main.exception.NotFoundException;
-import ru.practicum.stat.client.StatClient;
+import ru.practicum.main.exception.ValidationException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,7 +48,9 @@ class EventServiceImplTest {
     @Mock
     private UserClient userClient;
     @Mock
-    private StatClient statClient;
+    private CollectorClient collectorClient;
+    @Mock
+    private AnalyzerClient analyzerClient;
     @Mock
     private RequestClientAdapter requestClient;
 
@@ -63,13 +69,13 @@ class EventServiceImplTest {
 
         when(eventRepository.findAll(any(Predicate.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(event)));
-        when(statClient.getViewStats(any())).thenReturn(Collections.emptyList());
+        when(analyzerClient.getInteractionsCount(any())).thenReturn(Map.of());
         when(requestClient.countByEventIdsAndStatus(any(), any())).thenReturn(Collections.emptyList());
 
         List<EventFullDto> result = eventService.getEventsByAdmin(params);
 
         assertEquals(1, result.size());
-        verify(statClient).getViewStats(any());
+        verify(analyzerClient).getInteractionsCount(any());
     }
 
     @Test
@@ -80,7 +86,7 @@ class EventServiceImplTest {
                 .build();
 
         when(eventRepository.findWithRelationsById(1L)).thenReturn(Optional.of(event));
-        when(statClient.getViewStats(any())).thenReturn(Collections.emptyList());
+        when(analyzerClient.getInteractionsCount(any())).thenReturn(Map.of());
         when(requestClient.countByEventIdsAndStatus(any(), any())).thenReturn(Collections.emptyList());
 
         EventFullDto result = eventService.updateEventByAdmin(1L, request);
@@ -104,7 +110,41 @@ class EventServiceImplTest {
     void getPublishedEventById_notFound_shouldThrowNotFoundException() {
         when(eventRepository.findByIdAndState(999L, EventState.PUBLISHED)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> eventService.getPublishedEventById(999L, null));
+        assertThrows(NotFoundException.class, () -> eventService.getPublishedEventById(999L, 1L));
+    }
+
+    @Test
+    void getPublishedEventById_shouldSendViewAndReturnRating() {
+        when(eventRepository.findByIdAndState(1L, EventState.PUBLISHED))
+                .thenReturn(Optional.of(event(EventState.PUBLISHED)));
+        when(analyzerClient.getInteractionsCount(List.of(1L))).thenReturn(Map.of(1L, 1.4));
+        when(requestClient.countByEventIdsAndStatus(any(), any())).thenReturn(Collections.emptyList());
+
+        EventFullDto result = eventService.getPublishedEventById(1L, 7L);
+
+        assertEquals(1.4, result.getRating());
+        verify(collectorClient).sendView(7L, 1L);
+    }
+
+    @Test
+    void likeEvent_whenUserDidNotAttend_shouldThrowValidation() {
+        when(eventRepository.findByIdAndState(1L, EventState.PUBLISHED))
+                .thenReturn(Optional.of(event(EventState.PUBLISHED)));
+        when(requestClient.isConfirmedParticipant(7L, 1L)).thenReturn(false);
+
+        assertThrows(ValidationException.class, () -> eventService.likeEvent(7L, 1L));
+        verify(collectorClient, never()).sendLike(7L, 1L);
+    }
+
+    @Test
+    void likeEvent_whenUserAttended_shouldSendLike() {
+        when(eventRepository.findByIdAndState(1L, EventState.PUBLISHED))
+                .thenReturn(Optional.of(event(EventState.PUBLISHED)));
+        when(requestClient.isConfirmedParticipant(7L, 1L)).thenReturn(true);
+
+        eventService.likeEvent(7L, 1L);
+
+        verify(collectorClient).sendLike(7L, 1L);
     }
 
     @Test

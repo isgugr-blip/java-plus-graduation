@@ -1,6 +1,3 @@
-stats-client:
-  service-id: stats-server
-
 server:
   port: 0
   forward-headers-strategy: native

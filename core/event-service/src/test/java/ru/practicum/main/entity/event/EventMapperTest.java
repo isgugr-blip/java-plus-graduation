@@ -34,13 +34,13 @@ class EventMapperTest {
                 .initiatorName("initiator")
                 .build();
 
-        EventFullDto dto = EventMapper.toEventFullDto(event, 5L, 100L);
+        EventFullDto dto = EventMapper.toEventFullDto(event, 5L, 100.0);
 
         assertEquals(1L, dto.getId());
         assertEquals("annotation", dto.getAnnotation());
         assertEquals("description", dto.getDescription());
         assertEquals(5L, dto.getConfirmedRequests());
-        assertEquals(100L, dto.getViews());
+        assertEquals(100.0, dto.getRating());
         assertEquals(10L, dto.getInitiator().getId());
         assertEquals("initiator", dto.getInitiator().getName());
         assertTrue(dto.getPaid());
@@ -60,12 +60,12 @@ class EventMapperTest {
                 .initiatorName("initiator")
                 .build();
 
-        EventShortDto dto = EventMapper.toEventShortDto(event, 3L, 50L);
+        EventShortDto dto = EventMapper.toEventShortDto(event, 3L, 50.0);
 
         assertEquals(1L, dto.getId());
         assertEquals("annotation", dto.getAnnotation());
         assertEquals(3L, dto.getConfirmedRequests());
-        assertEquals(50L, dto.getViews());
+        assertEquals(50.0, dto.getRating());
         assertFalse(dto.getPaid());
         assertEquals("title", dto.getTitle());
     }

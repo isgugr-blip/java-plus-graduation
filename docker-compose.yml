@@ -28,21 +28,6 @@ services:
       timeout: 5s
       retries: 20
 
-  stats-db:
-    image: postgres:16.1
-    container_name: postgres-ewm-stats-db
-    ports:
-      - "6542:5432"
-    environment:
-      POSTGRES_USER: stat
-      POSTGRES_PASSWORD: stat
-      POSTGRES_DB: ewm-stats
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U stat -d ewm-stats"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   event-db:
     image: postgres:16.1
     container_name: postgres-ewm-event-db
@@ -103,19 +88,93 @@ services:
       timeout: 5s
       retries: 10
 
-  stats-server:
-    build: stat/stats-server
-    container_name: stats-server
+  kafka:
+    image: confluentinc/confluent-local:7.4.3
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      CLUSTER_ID: 'K0EA9p0yEe6MkAAAAkKsEg'
+
+  kafka-init-topics:
+    image: confluentinc/confluent-local:7.4.3
+    container_name: kafka-init-topics
+    depends_on:
+      - kafka
+    command: "bash -c \
+                'kafka-topics --create --topic stats.user-actions.v1 \
+                             --partitions 1 --replication-factor 1 --if-not-exists \
+                             --bootstrap-server kafka:29092 && \
+                kafka-topics --create --topic stats.events-similarity.v1 \
+                             --partitions 1 --replication-factor 1 --if-not-exists \
+                             --bootstrap-server kafka:29092'"
+    init: true
+
+  analyzer-db:
+    image: postgres:16.1
+    container_name: postgres-ewm-analyzer-db
+    ports:
+      - "11542:5432"
+    environment:
+      POSTGRES_USER: analyzer
+      POSTGRES_PASSWORD: analyzer
+      POSTGRES_DB: ewm-analyzer
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analyzer -d ewm-analyzer"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  collector:
+    build: stat/collector
+    container_name: collector
     depends_on:
       config-server:
         condition: service_healthy
-      stats-db:
+      kafka-init-topics:
+        condition: service_completed_successfully
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+  aggregator:
+    build: stat/aggregator
+    container_name: aggregator
+    depends_on:
+      config-server:
+        condition: service_healthy
+      kafka-init-topics:
+        condition: service_completed_successfully
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+  analyzer:
+    build: stat/analyzer
+    container_name: analyzer
+    depends_on:
+      config-server:
+        condition: service_healthy
+      kafka-init-topics:
+        condition: service_completed_successfully
+      analyzer-db:
         condition: service_healthy
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/ewm-stats
-      SPRING_DATASOURCE_USERNAME: stat
-      SPRING_DATASOURCE_PASSWORD: stat
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/ewm-analyzer
+      SPRING_DATASOURCE_USERNAME: analyzer
+      SPRING_DATASOURCE_PASSWORD: analyzer
 
   user-service:
     build: core/user-service
@@ -186,8 +245,6 @@ services:
       request-service:
         condition: service_started
       comment-service:
-        condition: service_started
-      stats-server:
         condition: service_started
     ports:
       - "8080:8080"

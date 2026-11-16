@@ -18,6 +18,8 @@ public interface RequestService {
 
     List<EventRequestsCountDto> countByEventIdsAndStatus(Set<Long> ids, RequestStatus status);
 
+    boolean isConfirmedParticipant(Long userId, Long eventId);
+
     List<ParticipationRequestDto> getEventRequestsByCreatorId(Long userId, Long eventId);
 
     EventRequestStatusUpdateResult updateEventRequestsStatus(Long userId, Long eventId,
